@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TensiCare - By Nekerio </title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-scale: 1;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #e2e8f0;
+            color: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Mode Ramah Lansia (Font Lebih Besar) */
+        body.elderly-mode {
+            font-size: 112%;
+        }
+        body.elderly-mode .text-xs {
+            font-size: 0.875rem !important;
+            line-height: 1.35rem !important;
+        }
+        body.elderly-mode .text-sm {
+            font-size: 1.025rem !important;
+            line-height: 1.5rem !important;
+        }
+        body.elderly-mode .text-base {
+            font-size: 1.15rem !important;
+            line-height: 1.65rem !important;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        /* Smooth Tab Transitions */
+        .tab-section {
+            display: none;
+            animation: fadeIn 0.22s ease-out;
+        }
+        .tab-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Pulse ring for unconsumed meds */
+        .pulse-subtle {
+            animation: pulseSubtle 2.2s infinite;
+        }
+        @keyframes pulseSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex justify-center items-start sm:py-6">
+
+    <!-- Mobile App Shell Container -->
+    <div id="app-shell" class="w-full max-w-md bg-slate-50 min-h-screen sm:min-h-[840px] sm:max-h-[92vh] sm:rounded-3xl sm:shadow-2xl sm:border sm:border-slate-200 flex flex-col relative overflow-hidden">
+
+        <!-- Top App Bar -->
+        <header class="bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 text-white px-4 pt-4 pb-3.5 shadow-md sticky top-0 z-30">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner border border-white/25">
+                        <i class="fa-solid fa-heart-pulse text-xl text-white"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="font-extrabold text-lg tracking-tight leading-none">TensiCare</h1>
+                            <span class="bg-emerald-900/40 border border-white/20 text-[11px] font-semibold px-2 py-0.5 rounded-full">PantauTensi</span>
+                        </div>
+                        <p class="text-xs text-teal-100 mt-0.5">Asisten Kepatuhan Pasien Hipertensi</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons: Mode Lansia & Reset Demo -->
+                <div class="flex items-center gap-1.5">
+                    <button id="btn-elderly-mode" onclick="toggleElderlyMode()" title="Perbesar Ukuran Teks (Ramah Lansia)" class="px-2.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-xs font-bold flex items-center gap-1 border border-white/20">
+                        <i class="fa-solid fa-text-height"></i>
+                        <span id="elderly-label">A+</span>
+                    </button>
+                    <button onclick="openSummaryModal()" title="Laporan Ringkas untuk Dokter/Apoteker" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-xs font-bold border border-white/20">
+                        <i class="fa-solid fa-file-medical text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-5" id="main-scroll">
+
+            <!-- ========================================== -->
+            <!-- TAB 1: BERANDA (DASHBOARD)                 -->
+            <!-- ========================================== -->
+            <section id="tab-beranda" class="tab-section active space-y-4">
+
+                <!-- Kartu Profil Singkat Pasien -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center font-extrabold text-lg border border-teal-200 shrink-0">
+                                BS
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h2 id="profile-name" class="font-bold text-slate-800 text-base">Tn. Budi Santoso</h2>
+                                    <span id="profile-age" class="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">58 Thn</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">Diagnosa: Hipertensi Esensial • RM: #HT-089</p>
+                            </div>
+                        </div>
+                        <button onclick="openEditProfileModal()" class="text-teal-600 hover:bg-teal-50 p-2 rounded-xl text-xs font-semibold transition flex items-center gap-1 shrink-0">
+                            <i class="fa-solid fa-pen-to-square"></i> Ubah
+                        </button>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
+                        <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-teal-600/10 text-teal-700 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-bullseye text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-500 font-medium">Target Tekanan Darah</p>
+                                <p id="profile-target" class="text-xs font-extrabold text-slate-800">&lt; 140/90 mmHg</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-700 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-calendar-day text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-500 font-medium">Hari Ini</p>
+                                <p id="current-date-display" class="text-xs font-extrabold text-slate-800">Sabtu, 17 Okt</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Skor Kepatuhan Minggu Ini -->
+                <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-white rounded-2xl p-4 shadow-md">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-[11px] uppercase tracking-wider font-bold text-teal-300">Skor Kepatuhan Minggu Ini</span>
+                            <h3 class="text-sm font-medium text-slate-200 mt-0.5" id="adherence-subtitle">Dihitung dari jadwal minum obat</h3>
+                        </div>
+                        <div class="text-right">
+                            <span id="adherence-percentage" class="text-2xl font-extrabold text-emerald-400">86%</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full h-3.5 bg-slate-700/80 rounded-full overflow-hidden p-0.5 border border-slate-600">
+                        <div id="adherence-bar" class="h-full bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full transition-all duration-500" style="width: 86%"></div>
+                    </div>
+
+                    <!-- Statistik Dosis & Tracker 7 Hari -->
+                    <div class="flex items-center justify-between text-xs text-slate-300 mt-2.5">
+                        <span id="adherence-dose-count"><i class="fa-solid fa-pills text-teal-400 mr-1"></i> 12 dari 14 dosis diminum</span>
+                        <span id="adherence-status-pill" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30">Patuh Baik</span>
+                    </div>
+
+                    <!-- Mini 7-Day Visual Pill Tracker -->
+                    <div class="mt-3.5 pt-3 border-t border-white/10">
+                        <p class="text-[11px] text-slate-300 mb-2 font-medium">Riwayat Kepatuhan 7 Hari Terakhir:</p>
+                        <div id="weekly-tracker-grid" class="grid grid-cols-7 gap-1.5 text-center">
+                            <!-- Di-render dinamis oleh JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Tekanan Darah Terakhir -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-stethoscope text-teal-600"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">Status Tekanan Darah Terakhir</h3>
+                        </div>
+                        <span id="latest-bp-time" class="text-xs text-slate-400 font-medium">Hari ini, 07:30</span>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-50 rounded-2xl p-3.5 border border-slate-200/70">
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <span id="latest-bp-value" class="text-3xl font-extrabold text-slate-900 tracking-tight">136/84</span>
+                                <span class="text-xs font-semibold text-slate-500">mmHg</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1 text-xs text-slate-600">
+                                <span><i class="fa-solid fa-heart text-rose-500 mr-1"></i>Nadi: <strong id="latest-bp-pulse">76 bpm</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <span id="latest-bp-badge" class="inline-block px-3 py-1.5 rounded-xl text-xs font-extrabold border">
+                                Pre-hipertensi
+                            </span>
+                            <p id="latest-bp-target-note" class="text-[11px] text-emerald-700 font-semibold mt-1">
+                                <i class="fa-solid fa-circle-check mr-0.5"></i> Sesuai Target (&lt;140/90)
+                            </p>
+                        </div>
+                    </div>
+
+                    <p id="latest-bp-symptom" class="text-xs text-slate-600 mt-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl px-3 py-2">
+                        <i class="fa-solid fa-comment-medical text-amber-600 mr-1"></i> Keluhan: Tidak ada keluhan, kondisi bugar
+                    </p>
+
+                    <button onclick="switchTab('tensi')" class="mt-3 w-full py-2.5 px-4 rounded-xl bg-teal-50 hover:bg-teal-100 active:scale-[0.99] text-teal-800 font-bold text-xs flex items-center justify-center gap-2 border border-teal-200 transition">
+                        <i class="fa-solid fa-plus-circle"></i> Catat Pengukuran Tensi Baru
+                    </button>
+                </div>
+
+                <!-- Jadwal Minum Obat Hari Ini -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-bell text-amber-500"></i> Jadwal Minum Obat Hari Ini
+                            </h3>
+                            <p class="text-xs text-slate-500">Tekan tombol hijau setelah Bapak/Ibu minum obat</p>
+                        </div>
+                        <button onclick="openAddMedModal()" class="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+                            <i class="fa-solid fa-plus"></i> Obat
+                        </button>
+                    </div>
+
+                    <!-- Daftar Obat Hari Ini -->
+                    <div id="medication-list" class="space-y-3">
+                        <!-- Di-render dinamis oleh JS -->
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 2: CATAT TENSI (LOG TEKANAN DARAH)     -->
+            <!-- ========================================== -->
+            <section id="tab-tensi" class="tab-section space-y-4">
+
+                <!-- Form Input Tekanan Darah -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-teal-600"></i> Input Tekanan Darah
+                            </h2>
+                            <p class="text-xs text-slate-500">Ukur dalam posisi duduk tenang selama 5 menit</p>
+                        </div>
+                    </div>
+
+                    <form id="form-bp" onsubmit="handleSaveBP(event)" class="space-y-3.5">
+                        <div class="grid grid-cols-2 gap-3">
+                            <!-- Sistolik -->
+                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 transition">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">
+                                    SISTOLIK (Atas)
+                                </label>
+                                <div class="flex items-baseline gap-1">
+                                    <input type="number" id="input-sys" min="60" max="260" required placeholder="135" oninput="updateLiveBPPreview()"
+                                        class="w-full bg-transparent text-2xl font-extrabold text-slate-900 focus:outline-none">
+                                    <span class="text-xs font-semibold text-slate-400">mmHg</span>
+                                </div>
+                                <span class="text-[11px] text-slate-400">Normal: &lt; 120</span>
+                            </div>
+
+                            <!-- Diastolik -->
+                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 transition">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">
+                                    DIASTOLIK (Bawah)
+                                </label>
+                                <div class="flex items-baseline gap-1">
+                                    <input type="number" id="input-dia" min="40" max="160" required placeholder="85" oninput="updateLiveBPPreview()"
+                                        class="w-full bg-transparent text-2xl font-extrabold text-slate-900 focus:outline-none">
+                                    <span class="text-xs font-semibold text-slate-400">mmHg</span>
+                                </div>
+                                <span class="text-[11px] text-slate-400">Normal: &lt; 80</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Klasifikasi Otomatis Preview -->
+                        <div id="live-bp-preview" class="hidden rounded-xl p-3 border text-xs transition-all">
+                            <!-- Di-update otomatis saat ketik Sistolik/Diastolik -->
+                        </div>
+
+                        <!-- Denyut Nadi & Waktu -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">
+                                    <i class="fa-solid fa-heart-pulse text-rose-500 mr-1"></i>Denyut Nadi
+                                </label>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" id="input-pulse" min="40" max="200" required placeholder="75"
+                                        class="w-full bg-transparent text-base font-bold text-slate-800 focus:outline-none">
+                                    <span class="text-xs text-slate-500 font-semibold">bpm</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">
+                                    <i class="fa-regular fa-clock text-teal-600 mr-1"></i>Waktu Ukur
+                                </label>
+                                <select id="input-time-period" class="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none py-1">
+                                    <option value="Pagi (Bangun Tidur)">Pagi (Bangun Tidur)</option>
+                                    <option value="Siang / Sore">Siang / Sore</option>
+                                    <option value="Malam (Sebelum Tidur)">Malam (Sebelum Tidur)</option>
+                                    <option value="Saat Ada Keluhan">Saat Ada Keluhan</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Pilihan Cepat Keluhan -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                                Keluhan yang Dirasakan (Klik untuk memilih):
+                            </label>
+                            <div id="symptom-chips" class="flex flex-wrap gap-1.5 mb-2">
+                                <button type="button" onclick="toggleSymptomChip(this, 'Tidak ada keluhan')" class="symptom-chip px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-teal-50 transition">
+                                    👍 Tidak ada keluhan
+                                </button>
+                                <button type="button" onclick="toggleSymptomChip(this, 'Pusing / sakit kepala')" class="symptom-chip px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-teal-50 transition">
+                                    🤕 Pusing / sakit kepala
+                                </button>
+                                <button type="button" onclick="toggleSymptomChip(this, 'Tengkuk terasa berat')" class="symptom-chip px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-teal-50 transition">
+                                    😣 Tengkuk berat
+                                </button>
+                                <button type="button" onclick="toggleSymptomChip(this, 'Bengkak di kaki')" class="symptom-chip px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-teal-50 transition">
+                                    🦶 Bengkak di kaki
+                                </button>
+                                <button type="button" onclick="toggleSymptomChip(this, 'Jantung berdebar')" class="symptom-chip px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-teal-50 transition">
+                                    💓 Jantung berdebar
+                                </button>
+                            </div>
+                            <input type="text" id="input-notes" placeholder="Ketik catatan keluhan tambahan (opsional)..."
+                                class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-teal-500">
+                        </div>
+
+                        <button type="submit" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-md shadow-teal-600/20 flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan Data Tekanan Darah
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Panduan Kategori Klasifikasi JNC VII / Kemenkes -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-teal-600"></i> Tabel Klasifikasi Tekanan Darah
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span class="font-extrabold text-emerald-800 block">Normal</span>
+                            <span class="text-emerald-700 text-[11px]">&lt; 120 dan &lt; 80 mmHg</span>
+                        </div>
+                        <div class="p-2 rounded-xl bg-amber-50 border border-amber-200">
+                            <span class="font-extrabold text-amber-800 block">Pre-hipertensi</span>
+                            <span class="text-amber-700 text-[11px]">120–139 atau 80–89 mmHg</span>
+                        </div>
+                        <div class="p-2 rounded-xl bg-orange-50 border border-orange-200">
+                            <span class="font-extrabold text-orange-800 block">HT Derajat 1</span>
+                            <span class="text-orange-700 text-[11px]">140–159 atau 90–99 mmHg</span>
+                        </div>
+                        <div class="p-2 rounded-xl bg-rose-50 border border-rose-200">
+                            <span class="font-extrabold text-rose-800 block">HT Derajat 2</span>
+                            <span class="text-rose-700 text-[11px]">&ge; 160 atau &ge; 100 mmHg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik Visualisasi Tren 7 Pengukuran Terakhir -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                <i class="fa-solid fa-chart-line text-teal-600"></i> Grafik Tren Tekanan Darah
+                            </h3>
+                            <p class="text-[11px] text-slate-500">7 catatan pengukuran terakhir & garis batas 140/90</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] font-bold">
+                            <span class="flex items-center gap-1 text-rose-600"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Sistolik</span>
+                            <span class="flex items-center gap-1 text-blue-600"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Diastolik</span>
+                        </div>
+                    </div>
+
+                    <!-- Responsive SVG Line Chart -->
+                    <div id="bp-chart-container" class="w-full pt-2">
+                        <!-- Di-render dinamis oleh JS -->
+                    </div>
+                </div>
+
+                <!-- Riwayat Pengukuran Tekanan Darah -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left text-teal-600"></i> Riwayat Pengukuran
+                        </h3>
+                        <span id="bp-history-count" class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">7 Data</span>
+                    </div>
+                    <div id="bp-history-list" class="space-y-2.5">
+                        <!-- Di-render dinamis oleh JS -->
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 3: EVALUASI KEPATUHAN (KUESIONER)      -->
+            <!-- ========================================== -->
+            <section id="tab-evaluasi" class="tab-section space-y-4">
+
+                <!-- Header Kuesioner -->
+                <div class="bg-gradient-to-br from-teal-700 to-emerald-700 text-white rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">Evaluasi Mandiri (8 Pertanyaan)</span>
+                            <h2 class="font-extrabold text-base mt-2">Kuesioner Kepatuhan Minum Obat</h2>
+                            <p class="text-xs text-teal-100 mt-1">Jawablah sesuai kebiasaan Bapak/Ibu selama 2 minggu terakhir untuk mengetahui tingkat kepatuhan dan solusi konseling yang tepat.</p>
+                        </div>
+                        <button onclick="resetQuestionnaire()" class="text-xs bg-white/15 hover:bg-white/25 px-2.5 py-1.5 rounded-xl font-bold shrink-0 border border-white/20">
+                            Ulangi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hasil Skor Kepatuhan (Muncul / Ter-update Otomatis) -->
+                <div id="quiz-result-card" class="bg-white rounded-2xl p-4 shadow-sm border-2 border-teal-500">
+                    <!-- Di-render otomatis oleh JS -->
+                </div>
+
+                <!-- Daftar 8 Pertanyaan Ya/Tidak -->
+                <div id="quiz-questions-container" class="space-y-3">
+                    <!-- Di-render dinamis oleh JS -->
+                </div>
+
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 4: EDUKASI & MONITORING EFEK SAMPING   -->
+            <!-- ========================================== -->
+            <section id="tab-meso" class="tab-section space-y-4">
+
+                <!-- Sub-navigation Switcher: MESO vs Gaya Hidup -->
+                <div class="bg-slate-200/80 p-1 rounded-2xl grid grid-cols-2 gap-1">
+                    <button id="subtab-btn-meso" onclick="switchMesoSubtab('meso')" class="py-2.5 px-3 rounded-xl font-bold text-xs transition bg-white text-teal-800 shadow-sm">
+                        <i class="fa-solid fa-triangle-exclamation mr-1 text-amber-500"></i> Lapor Efek Samping (MESO)
+                    </button>
+                    <button id="subtab-btn-edukasi" onclick="switchMesoSubtab('edukasi')" class="py-2.5 px-3 rounded-xl font-bold text-xs transition text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-apple-whole mr-1 text-emerald-600"></i> Edukasi Gaya Hidup
+                    </button>
+                </div>
+
+                <!-- SUB-VIEW 1: MONITORING EFEK SAMPING OBAT (MESO) -->
+                <div id="subview-meso" class="space-y-4">
+                    <!-- Banner Peringatan Penting -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 flex gap-3 items-start">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div class="text-xs text-amber-900 leading-relaxed">
+                            <strong class="font-extrabold block mb-0.5">Pesan Keselamatan Pasien:</strong>
+                            Jika mengalami keluhan efek samping, <strong>jangan menghentikan obat secara mendadak</strong> tanpa sepengetahuan dokter agar tekanan darah tidak melonjak drastis. Catat keluhan di bawah ini untuk dikonsultasikan.
+                        </div>
+                    </div>
+
+                    <!-- Panduan Cepat Efek Samping Khas Obat Hipertensi -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                        <h3 class="font-bold text-slate-800 text-sm mb-2.5 flex items-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass-plus text-teal-600"></i> Kenali Efek Samping Obat Umum
+                        </h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-extrabold text-slate-800">1. Amlodipin / Nifedipin (Golongan CCB)</span>
+                                    <span class="bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-md text-[10px]">Sering: Kaki Bengkak</span>
+                                </div>
+                                <p class="text-slate-600 mt-1">Dapat menyebabkan bengkak pada pergelangan kaki (edema perifer) atau kemerahan di wajah. <strong>Saran:</strong> Tinggikan posisi kaki dengan bantal saat duduk/berbaring & lapor dokter.</p>
+                            </div>
+
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-extrabold text-slate-800">2. Captopril / Lisinopril (Golongan ACEi)</span>
+                                    <span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-md text-[10px]">Sering: Batuk Kering</span>
+                                </div>
+                                <p class="text-slate-600 mt-1">Dapat memicu batuk kering terus-menerus yang menggelitik tenggorokan. <strong>Saran:</strong> Konsultasikan ke dokter; biasanya dokter dapat mengganti ke golongan ARB (seperti Candesartan/Valsartan).</p>
+                            </div>
+
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-extrabold text-slate-800">3. Semua Obat Penurun Tensi (Candesartan, dll)</span>
+                                    <span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-md text-[10px]">Hipotensi Ortostatik</span>
+                                </div>
+                                <p class="text-slate-600 mt-1">Pusing atau pandangan gelap sesaat ketika bangkit berdiri mendadak. <strong>Saran:</strong> Bangun secara bertahap (duduk dulu di tepi kasur 1–2 menit sebelum berdiri).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Pelaporan MESO -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                        <h3 class="font-bold text-slate-800 text-base mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-check text-teal-600"></i> Form Lapor Keluhan Efek Samping
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-3">Pilih obat dan keluhan yang Bapak/Ibu rasakan untuk mendapatkan panduan awal:</p>
+
+                        <form id="form-meso" onsubmit="handleSaveMeso(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Obat yang Dicurigai Memicu Keluhan</label>
+                                <select id="meso-drug" required class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500">
+                                    <option value="Amlodipin 5 mg / 10 mg">Amlodipin 5 mg / 10 mg (Gol. CCB)</option>
+                                    <option value="Candesartan 8 mg / 16 mg">Candesartan 8 mg / 16 mg (Gol. ARB)</option>
+                                    <option value="Captopril / Lisinopril (Gol. ACEi)">Captopril / Lisinopril (Gol. ACE Inhibitor)</option>
+                                    <option value="Furosemid / HCT (Diuretik)">Furosemid / Hydrochlorothiazide (Diuretik)</option>
+                                    <option value="Bisoprolol (Beta Blocker)">Bisoprolol (Gol. Beta Blocker)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Gejala Efek Samping yang Dirasakan</label>
+                                <select id="meso-symptom" required class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500">
+                                    <option value="Kaki / pergelangan kaki bengkak (Edema)">🦶 Kaki / pergelangan kaki bengkak (Edema)</option>
+                                    <option value="Batuk kering terus-menerus">🗣️ Batuk kering terus-menerus (tanpa dahak)</option>
+                                    <option value="Pusing saat bangkit berdiri (Hipotensi Ortostatik)">💫 Pusing / kunang-kunang saat bangkit berdiri</option>
+                                    <option value="Sering buang air kecil / lemas">🚻 Sering buang air kecil & kram otot</option>
+                                    <option value="Denyut jantung terasa lambat / kaki dingin">💓 Denyut nadi lambat / tangan terasa dingin</option>
+                                    <option value="Mual / gangguan lambung">🤢 Mual atau rasa tidak nyaman di perut</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tingkat Keparahan</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="meso-severity" value="Ringan" checked class="peer sr-only">
+                                        <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-600 peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-800 transition">
+                                            🟢 Ringan
+                                        </div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="meso-severity" value="Sedang" class="peer sr-only">
+                                        <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-600 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-800 transition">
+                                            🟡 Sedang
+                                        </div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="meso-severity" value="Berat" class="peer sr-only">
+                                        <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-600 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-800 transition">
+                                            🔴 Berat
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-paper-plane"></i> Catat Laporan MESO & Lihat Rekomendasi
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Daftar Riwayat Laporan MESO -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                        <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center justify-between">
+                            <span><i class="fa-solid fa-notes-medical text-teal-600 mr-1.5"></i> Riwayat Catatan Efek Samping</span>
+                            <span id="meso-count-badge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">1 Catatan</span>
+                        </h3>
+                        <div id="meso-history-list" class="space-y-3">
+                            <!-- Di-render dinamis oleh JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 2: EDUKASI MODIFIKASI GAYA HIDUP (DIET DASH & CERDIK) -->
+                <div id="subview-edukasi" class="hidden space-y-4">
+                    <div class="bg-gradient-to-r from-emerald-700 to-teal-700 text-white rounded-2xl p-4 shadow-sm">
+                        <span class="text-[11px] font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">Non-Farmakologi</span>
+                        <h3 class="font-extrabold text-base mt-2">Modifikasi Gaya Hidup Sehat (Diet DASH)</h3>
+                        <p class="text-xs text-emerald-100 mt-1">Kepatuhan minum obat yang dikombinasikan dengan gaya hidup sehat dapat menurunkan tekanan darah ekstra 5–15 mmHg.</p>
+                    </div>
+
+                    <!-- Checklist Kebiasaan Harian Interaktif -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-emerald-600"></i> Target Gaya Hidup Hari Ini
+                        </h4>
+                        <p class="text-xs text-slate-500 mb-3">Centang kebiasaan sehat yang sudah Bapak/Ibu lakukan hari ini:</p>
+
+                        <div id="lifestyle-checklist" class="space-y-2.5">
+                            <!-- Di-render oleh JS -->
+                        </div>
+                    </div>
+
+                    <!-- Kartu Panduan Praktis Lansia -->
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex gap-3.5 items-start">
+                            <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg shrink-0">
+                                <i class="fa-solid fa-spoon"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">1. Batasi Garam & Natrium (&lt; 1 Sendok Teh/Hari)</h4>
+                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                    Batas aman garam bagi pasien hipertensi adalah maksimal <strong>1 sendok teh rata per hari</strong> (&lt;2.000 mg natrium). Kurangi ikan asin, telur asin, kerupuk, mi instan, dan makanan kaleng. Gunakan bumbu rempah alami (bawang putih, jahe, salam, serai) agar masakan tetap lezat.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex gap-3.5 items-start">
+                            <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg shrink-0">
+                                <i class="fa-solid fa-person-walking"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">2. Aktivitas Fisik Ramah Lansia (30 Menit/Hari)</h4>
+                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                    Lakukan jalan pagi santai, senam hipertensi, atau bersepeda statis selama <strong>30 menit sebanyak 5 kali seminggu</strong>. Hindari olahraga angkat beban berat yang menahan napas.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex gap-3.5 items-start">
+                            <div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg shrink-0">
+                                <i class="fa-solid fa-spa"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">3. Manajemen Stres & Istirahat Cukup</h4>
+                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                    Stres memicu hormon adrenalin yang menyempitkan pembuluh darah. Lakukan latihan <strong>tarik napas dalam 4-7-8</strong> selama 5 menit sebelum tidur dan usahakan tidur malam 7–8 jam.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation Bar (Gaya Aplikasi Mobile) -->
+        <nav class="bg-white border-t border-slate-200 px-2 py-1.5 sticky bottom-0 z-30 shadow-[0_-4px_12px_rgba(15,23,42,0.06)]">
+            <div class="grid grid-cols-4 gap-1">
+                <button onclick="switchTab('beranda')" id="nav-beranda" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-2xl text-teal-700 bg-teal-50/90 font-extrabold transition">
+                    <i class="fa-solid fa-house-medical text-lg mb-1"></i>
+                    <span class="text-[11px] leading-none">Beranda</span>
+                </button>
+                <button onclick="switchTab('tensi')" id="nav-tensi" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-2xl text-slate-500 hover:bg-slate-50 font-semibold transition">
+                    <i class="fa-solid fa-heart-circle-plus text-lg mb-1"></i>
+                    <span class="text-[11px] leading-none">Catat Tensi</span>
+                </button>
+                <button onclick="switchTab('evaluasi')" id="nav-evaluasi" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-2xl text-slate-500 hover:bg-slate-50 font-semibold transition">
+                    <i class="fa-solid fa-clipboard-question text-lg mb-1"></i>
+                    <span class="text-[11px] leading-none">Evaluasi</span>
+                </button>
+                <button onclick="switchTab('meso')" id="nav-meso" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-2xl text-slate-500 hover:bg-slate-50 font-semibold transition">
+                    <i class="fa-solid fa-shield-heart text-lg mb-1"></i>
+                    <span class="text-[11px] leading-none">MESO & Info</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- ========================================== -->
+        <!-- MODAL 1: TAMBAH JADWAL OBAT BARU           -->
+        <!-- ========================================== -->
+        <div id="modal-add-med" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200 animate-[fadeIn_0.2s_ease-out]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-capsules text-teal-600"></i> Tambah Jadwal Obat Baru
+                    </h3>
+                    <button onclick="closeAddMedModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="handleAddMedication(event)" class="space-y-3.5 mt-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Obat & Dosis</label>
+                        <input type="text" id="med-name-input" required placeholder="Contoh: Bisoprolol 2.5 mg / Captopril 25 mg"
+                            class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Waktu Minum</label>
+                            <select id="med-period-input" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none">
+                                <option value="Pagi">🌅 Pagi</option>
+                                <option value="Siang">☀️ Siang</option>
+                                <option value="Sore">🌤️ Sore</option>
+                                <option value="Malam">🌙 Malam</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Jam Pengingat</label>
+                            <input type="time" id="med-time-input" value="12:00" required
+                                class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Aturan Pakai / Catatan</label>
+                        <input type="text" id="med-instruction-input" required placeholder="Contoh: 1 Tablet sesudah makan"
+                            class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500">
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" onclick="closeAddMedModal()" class="w-1/3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">
+                            Batal
+                        </button>
+                        <button type="submit" class="w-2/3 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs shadow-md">
+                            <i class="fa-solid fa-check mr-1"></i> Simpan Jadwal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODAL 2: UBAH PROFIL SINGKAT PASIEN        -->
+        <!-- ========================================== -->
+        <div id="modal-edit-profile" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-user-pen text-teal-600"></i> Ubah Profil Pasien
+                    </h3>
+                    <button onclick="closeEditProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="handleSaveProfile(event)" class="space-y-3.5 mt-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pasien</label>
+                        <input type="text" id="edit-profile-name" required class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Usia (Tahun)</label>
+                            <input type="number" id="edit-profile-age" min="18" max="110" required class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Target TD (mmHg)</label>
+                            <select id="edit-profile-target" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800">
+                                <option value="< 140/90 mmHg">&lt; 140/90 mmHg (Umum)</option>
+                                <option value="< 130/80 mmHg">&lt; 130/80 mmHg (DM/CKD)</option>
+                                <option value="< 150/90 mmHg">&lt; 150/90 mmHg (Lansia &gt;80 th)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" onclick="closeEditProfileModal()" class="w-1/3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">Batal</button>
+                        <button type="submit" class="w-2/3 py-3 rounded-xl bg-teal-600 text-white font-extrabold text-xs">Simpan Profil</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODAL 3: RINGKASAN KONTROL DOKTER/APOTEKER -->
+        <!-- ========================================== -->
+        <div id="modal-summary" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-file-waveform text-teal-600"></i> Ringkasan Pemantauan Pasien
+                        </h3>
+                        <p class="text-[11px] text-slate-500">Siap ditunjukkan saat kontrol ke Dokter / Apoteker</p>
+                    </div>
+                    <button onclick="closeSummaryModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto my-3 space-y-3 text-xs">
+                    <pre id="summary-text-box" class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 font-mono text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed"></pre>
+                </div>
+
+                <div class="flex flex-col gap-2 pt-2 border-t border-slate-100">
+                    <button onclick="copySummaryToClipboard()" class="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-regular fa-copy"></i> Salin Ringkasan Laporan (Copy)
+                    </button>
+                    <button onclick="resetAllDemoData()" class="w-full py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-200">
+                        <i class="fa-solid fa-rotate-left"></i> Reset ke Data Awal Demonstrasi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast-box" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 transform -translate-y-2 w-11/12 max-w-sm">
+            <div id="toast-inner" class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold">
+                <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+                <span id="toast-msg">Berhasil disimpan!</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC & STATE MANAGEMENT        -->
+    <!-- ========================================== -->
+    <script>
+        const STORAGE_KEY = 'tensicare_app_state_v1';
+
+        // Default Data Demonstrasi Lengkap
+        function getDefaultState() {
+            return {
+                elderlyMode: false,
+                profile: {
+                    name: 'Tn. Budi Santoso',
+                    age: 58,
+                    target: '< 140/90 mmHg'
+                },
+                // 6 hari sebelumnya (11 dari 12 dosis sudah diminum) + jadwal hari ini
+                pastSixDaysTaken: 11,
+                pastSixDaysTotal: 12,
+                medications: [
+                    {
+                        id: 'med-1',
+                        name: 'Amlodipin 5 mg',
+                        period: 'Pagi',
+                        time: '08:00',
+                        instruction: '1 Tablet sesudah sarapan pagi',
+                        taken: true,
+                        takenAt: '08:05'
+                    },
+                    {
+                        id: 'med-2',
+                        name: 'Candesartan 8 mg',
+                        period: 'Malam',
+                        time: '20:00',
+                        instruction: '1 Tablet malam sebelum tidur',
+                        taken: false,
+                        takenAt: null
+                    }
+                ],
+                bpLogs: [
+                    { id: 101, date: '11 Okt', time: 'Pagi', sys: 152, dia: 94, pulse: 82, note: 'Tengkuk terasa agak berat' },
+                    { id: 102, date: '12 Okt', time: 'Pagi', sys: 148, dia: 92, pulse: 80, note: 'Habis perjalanan luar kota' },
+                    { id: 103, date: '13 Okt', time: 'Pagi', sys: 142, dia: 88, pulse: 78, note: 'Tidur cukup' },
+                    { id: 104, date: '14 Okt', time: 'Malam', sys: 139, dia: 86, pulse: 75, note: 'Tidak ada keluhan' },
+                    { id: 105, date: '15 Okt', time: 'Pagi', sys: 144, dia: 90, pulse: 79, note: 'Lupa minum obat malam sebelumnya' },
+                    { id: 106, date: '16 Okt', time: 'Pagi', sys: 138, dia: 85, pulse: 76, note: 'Tidak ada keluhan' },
+                    { id: 107, date: 'Hari Ini', time: 'Pagi (07:30)', sys: 136, dia: 84, pulse: 76, note: 'Tidak ada keluhan, kondisi bugar' }
+                ],
+                // 8 Pertanyaan Kepatuhan (Adaptasi MMAS-8 dalam format Ya/Tidak ramah lansia)
+                // Default contoh terisi sebagian agar langsung terlihat interaktif
+                quizAnswers: {
+                    q1: false, // Lupa minum obat? (Tidak = Patuh)
+                    q2: false, // Sengaja tidak minum 2 minggu terakhir? (Tidak = Patuh)
+                    q3: false, // Kurangi/berhenti karena efek samping? (Tidak = Patuh)
+                    q4: true,  // Lupa bawa obat saat bepergian? (Ya = Tidak patuh pada poin ini)
+                    q5: true,  // Kemarin minum semua obat? (Ya = Patuh)
+                    q6: false, // Berhenti saat merasa sudah sembuh/normal? (Tidak = Patuh)
+                    q7: false, // Merasa jenuh/terbebani minum obat tiap hari? (Tidak = Patuh)
+                    q8: false  // Sering kesulitan mengingat waktu minum obat? (Tidak = Patuh)
+                },
+                mesoReports: [
+                    {
+                        id: 201,
+                        date: '14 Okt 2026',
+                        drug: 'Amlodipin 5 mg / 10 mg',
+                        symptom: 'Kaki / pergelangan kaki bengkak (Edema)',
+                        severity: 'Ringan',
+                        advice: 'Efek samping khas golongan CCB (Amlodipin). Tinggikan kaki dengan bantal saat duduk/tidur, kurangi asupan garam, dan sampaikan ke dokter saat kontrol (jangan hentikan obat sepihak).'
+                    }
+                ],
+                lifestyleChecks: [
+                    { id: 'ls-1', text: 'Membatasi garam < 1 sendok teh & menghindari makanan asin/kaleng', done: true },
+                    { id: 'ls-2', text: 'Konsumsi sayur hijau & buah segar (sumber kalium alami)', done: true },
+                    { id: 'ls-3', text: 'Jalan pagi / aktivitas fisik ringan minimal 30 menit', done: false },
+                    { id: 'ls-4', text: 'Tidak merokok & mengelola stres (relaksasi napas dalam)', done: true }
+                ]
+            };
+        }
+
+        let appState = loadState();
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    return JSON.parse(raw);
+                }
+            } catch (e) {
+                console.error('Gagal memuat state:', e);
+            }
+            return getDefaultState();
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Gagal menyimpan state:', e);
+            }
+        }
+
+        // Daftar Pertanyaan Kuesioner Kepatuhan (8 Pertanyaan)
+        const QUIZ_QUESTIONS = [
+            {
+                id: 'q1',
+                text: '1. Apakah Bapak/Ibu kadang-kadang lupa minum obat tekanan darah tinggi?',
+                goodAnswer: false,
+                factorTag: 'Faktor Lupa Jadwal',
+                counselingTip: 'Gunakan alarm pengingat di HP atau letakkan obat di dekat tempat makan/gelas air minum.'
+            },
+            {
+                id: 'q2',
+                text: '2. Selama 2 minggu terakhir, apakah ada hari di mana Bapak/Ibu sengaja tidak minum obat?',
+                goodAnswer: false,
+                factorTag: 'Ketidakpatuhan Disengaja',
+                counselingTip: 'Obat hipertensi bekerja menjaga tekanan darah tetap stabil setiap 24 jam agar pembuluh darah tidak pecah/rusak.'
+            },
+            {
+                id: 'q3',
+                text: '3. Pernahkah Bapak/Ibu mengurangi dosis atau berhenti minum obat tanpa memberitahu dokter karena merasa terganggu efek samping?',
+                goodAnswer: false,
+                factorTag: 'Terganggu Efek Samping Obat',
+                counselingTip: 'Jika ada keluhan (seperti batuk kering atau kaki bengkak), laporkan melalui fitur MESO agar dokter dapat mengganti jenis obat yang lebih cocok.'
+            },
+            {
+                id: 'q4',
+                text: '4. Ketika bepergian atau meninggalkan rumah, apakah Bapak/Ibu kadang lupa membawa obat hipertensi?',
+                goodAnswer: false,
+                factorTag: 'Lupa Bawa Obat Saat Bepergian',
+                counselingTip: 'Siapkan dompet obat kecil/cadangan di dalam tas yang selalu dibawa saat bepergian.'
+            },
+            {
+                id: 'q5',
+                text: '5. Apakah kemarin Bapak/Ibu meminum semua obat tekanan darah tinggi sesuai jadwal?',
+                goodAnswer: true, // Pertanyaan positif: YA = Patuh (1 poin)
+                factorTag: 'Terlewat Dosis Kemarin',
+                counselingTip: 'Jika terlewat satu dosis, segera minum bila masih jauh dari jadwal berikutnya (jangan menggandakan dosis).'
+            },
+            {
+                id: 'q6',
+                text: '6. Ketika merasa tekanan darah sudah normal atau badan terasa sehat (merasa sembuh), apakah Bapak/Ibu kadang berhenti minum obat?',
+                goodAnswer: false,
+                factorTag: 'Merasa Sudah Sembuh',
+                counselingTip: 'Tekanan darah menjadi normal justru karena obat sedang bekerja. Menghentikan obat membuat tensi kembali naik (rebound hypertension).'
+            },
+            {
+                id: 'q7',
+                text: '7. Apakah Bapak/Ibu merasa jenuh atau terbebani karena harus minum obat hipertensi setiap hari?',
+                goodAnswer: false,
+                factorTag: 'Kejenuhan Terapi Jangka Panjang',
+                counselingTip: 'Libatkan keluarga sebagai pengawas minum obat (PMO) dan diskusikan ke dokter kemungkinan obat kombinasi dosis tunggal (1 kali sehari).'
+            },
+            {
+                id: 'q8',
+                text: '8. Apakah Bapak/Ibu sering mengalami kesulitan mengingat waktu minum seluruh obat hipertensi?',
+                goodAnswer: false,
+                factorTag: 'Kesulitan Mengingat Regimen',
+                counselingTip: 'Gunakan Kotak Obat Harian (Pillbox 7 Hari) yang diisi setiap awal minggu untuk memudahkan pengecekan.'
+            }
+        ];
+
+        // Klasifikasi Tekanan Darah (JNC VII / Kemenkes RI)
+        function classifyBP(sys, dia) {
+            sys = Number(sys);
+            dia = Number(dia);
+
+            if (sys >= 180 || dia >= 120) {
+                return {
+                    label: 'Krisis Hipertensi',
+                    badgeClass: 'bg-rose-700 text-white border-rose-800',
+                    cardClass: 'bg-rose-50 border-rose-300 text-rose-900',
+                    advice: 'PERINGATAN MEDIS: Tekanan darah sangat tinggi (≥180/120 mmHg). Segera istirahat dan kunjungi IGD/Fasilitas Kesehatan terdekat!'
+                };
+            }
+            if (sys >= 160 || dia >= 100) {
+                return {
+                    label: 'Hipertensi Derajat 2',
+                    badgeClass: 'bg-rose-100 text-rose-800 border-rose-300',
+                    cardClass: 'bg-rose-50 border-rose-200 text-rose-900',
+                    advice: 'Di atas target terapi. Pastikan obat diminum teratur sesuai jadwal dan konsultasikan ke dokter.'
+                };
+            }
+            if (sys >= 140 || dia >= 90) {
+                return {
+                    label: 'Hipertensi Derajat 1',
+                    badgeClass: 'bg-orange-100 text-orange-800 border-orange-300',
+                    cardClass: 'bg-orange-50 border-orange-200 text-orange-900',
+                    advice: 'Sedikit di atas target (<140/90). Evaluasi kepatuhan minum obat dan kurangi konsumsi garam hari ini.'
+                };
+            }
+            if (sys >= 120 || dia >= 80) {
+                return {
+                    label: 'Pre-hipertensi',
+                    badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
+                    cardClass: 'bg-amber-50 border-amber-200 text-amber-900',
+                    advice: 'Terkontrol baik (memenuhi target <140/90 mmHg). Pertahankan minum obat rutin dan diet rendah garam!'
+                };
+            }
+            return {
+                label: 'Normal',
+                badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                cardClass: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+                advice: 'Sangat baik! Tekanan darah optimal (<120/80 mmHg). Tetap lanjutkan obat sesuai anjuran dokter.'
+            };
+        }
+
+        // Navigasi Antar Tab Utama
+        function switchTab(tabName) {
+            const tabs = ['beranda', 'tensi', 'evaluasi', 'meso'];
+            tabs.forEach(t => {
+                const section = document.getElementById('tab-' + t);
+                const navBtn = document.getElementById('nav-' + t);
+                if (t === tabName) {
+                    section.classList.add('active');
+                    navBtn.className = 'nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-2xl text-teal-700 bg-teal-50/90 font-extrabold transition';
+                } else {
+                    section.classList.remove('active');
+                    navBtn.className = 'nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-2xl text-slate-500 hover:bg-slate-50 font-semibold transition';
+                }
+            });
+            document.getElementById('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Sub-tab pada halaman MESO & Edukasi
+        function switchMesoSubtab(sub) {
+            const btnMeso = document.getElementById('subtab-btn-meso');
+            const btnEdukasi = document.getElementById('subtab-btn-edukasi');
+            const viewMeso = document.getElementById('subview-meso');
+            const viewEdukasi = document.getElementById('subview-edukasi');
+
+            if (sub === 'meso') {
+                viewMeso.classList.remove('hidden');
+                viewEdukasi.classList.add('hidden');
+                btnMeso.className = 'py-2.5 px-3 rounded-xl font-bold text-xs transition bg-white text-teal-800 shadow-sm';
+                btnEdukasi.className = 'py-2.5 px-3 rounded-xl font-bold text-xs transition text-slate-600 hover:text-slate-900';
+            } else {
+                viewMeso.classList.add('hidden');
+                viewEdukasi.classList.remove('hidden');
+                btnEdukasi.className = 'py-2.5 px-3 rounded-xl font-bold text-xs transition bg-white text-teal-800 shadow-sm';
+                btnMeso.className = 'py-2.5 px-3 rounded-xl font-bold text-xs transition text-slate-600 hover:text-slate-900';
+            }
+        }
+
+        // Toggle Mode Ramah Lansia (Font Besar)
+        function toggleElderlyMode() {
+            appState.elderlyMode = !appState.elderlyMode;
+            applyElderlyMode();
+            saveState();
+            showToast(appState.elderlyMode ? 'Mode Teks Besar (Ramah Lansia) Aktif' : 'Ukuran Teks Standar Aktif');
+        }
+
+        function applyElderlyMode() {
+            const btn = document.getElementById('btn-elderly-mode');
+            if (appState.elderlyMode) {
+                document.body.classList.add('elderly-mode');
+                btn.classList.add('bg-amber-400', 'text-slate-900');
+                btn.classList.remove('bg-white/15', 'text-white');
+            } else {
+                document.body.classList.remove('elderly-mode');
+                btn.classList.remove('bg-amber-400', 'text-slate-900');
+                btn.classList.add('bg-white/15', 'text-white');
+            }
+        }
+
+        // ==========================================
+        // RENDER BERANDA (PROFIL, SKOR, OBAT, TD)
+        // ==========================================
+        function renderDashboard() {
+            // 1. Profil
+            document.getElementById('profile-name').textContent = appState.profile.name;
+            document.getElementById('profile-age').textContent = appState.profile.age + ' Thn';
+            document.getElementById('profile-target').textContent = appState.profile.target;
+
+            // 2. Hitung Skor Kepatuhan Minggu Ini secara Dinamis
+            const todayTotal = appState.medications.length;
+            const todayTaken = appState.medications.filter(m => m.taken).length;
+            const weekTotal = appState.pastSixDaysTotal + todayTotal;
+            const weekTaken = appState.pastSixDaysTaken + todayTaken;
+            const pct = weekTotal > 0 ? Math.round((weekTaken / weekTotal) * 100) : 100;
+
+            document.getElementById('adherence-percentage').textContent = pct + '%';
+            document.getElementById('adherence-bar').style.width = pct + '%';
+            document.getElementById('adherence-dose-count').innerHTML =
+                `<i class="fa-solid fa-pills text-teal-400 mr-1"></i> ${weekTaken} dari ${weekTotal} dosis minggu ini diminum`;
+
+            const statusPill = document.getElementById('adherence-status-pill');
+            const pctEl = document.getElementById('adherence-percentage');
+            if (pct >= 85) {
+                statusPill.textContent = 'Kepatuhan Tinggi';
+                statusPill.className = 'px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30';
+                pctEl.className = 'text-2xl font-extrabold text-emerald-400';
+            } else if (pct >= 70) {
+                statusPill.textContent = 'Kepatuhan Sedang';
+                statusPill.className = 'px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30';
+                pctEl.className = 'text-2xl font-extrabold text-amber-400';
+            } else {
+                statusPill.textContent = 'Perlu Perhatian';
+                statusPill.className = 'px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold border border-rose-400/30';
+                pctEl.className = 'text-2xl font-extrabold text-rose-400';
+            }
+
+            // Render 7-Day Visual Pill Tracker
+            const days = [
+                { d: 'Sen', status: 'full' },
+                { d: 'Sel', status: 'full' },
+                { d: 'Rab', status: 'full' },
+                { d: 'Kam', status: 'partial' },
+                { d: 'Jum', status: 'full' },
+                { d: 'Sab', status: 'full' },
+                {
+                    d: 'Hari Ini',
+                    status: todayTotal === 0 ? 'full' : (todayTaken === todayTotal ? 'full' : (todayTaken > 0 ? 'partial' : 'none'))
+                }
+            ];
+            const trackerGrid = document.getElementById('weekly-tracker-grid');
+            trackerGrid.innerHTML = days.map((item, idx) => {
+                let iconHtml = '';
+                let boxClass = '';
+                if (item.status === 'full') {
+                    iconHtml = '<i class="fa-solid fa-check text-xs"></i>';
+                    boxClass = 'bg-emerald-500/25 border-emerald-400/50 text-emerald-300';
+                } else if (item.status === 'partial') {
+                    iconHtml = `<span class="text-[10px] font-extrabold">${idx === 6 ? todayTaken + '/' + todayTotal : '1/2'}</span>`;
+                    boxClass = 'bg-amber-500/25 border-amber-400/50 text-amber-300';
+                } else {
+                    iconHtml = `<span class="text-[10px] font-extrabold">0/${todayTotal}</span>`;
+                    boxClass = 'bg-rose-500/25 border-rose-400/50 text-rose-300';
+                }
+                return `
+                    <div class="flex flex-col items-center">
+                        <div class="w-full h-8 rounded-xl border flex items-center justify-center ${boxClass} ${idx === 6 ? 'ring-2 ring-teal-400' : ''}">
+                            ${iconHtml}
+                        </div>
+                        <span class="text-[10px] mt-1 font-semibold ${idx === 6 ? 'text-teal-300 font-extrabold' : 'text-slate-400'}">${item.d}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // 3. Status Tekanan Darah Terakhir
+            if (appState.bpLogs.length > 0) {
+                const latest = appState.bpLogs[appState.bpLogs.length - 1];
+                const cat = classifyBP(latest.sys, latest.dia);
+                document.getElementById('latest-bp-value').textContent = `${latest.sys}/${latest.dia}`;
+                document.getElementById('latest-bp-pulse').textContent = `${latest.pulse} bpm`;
+                document.getElementById('latest-bp-time').textContent = `${latest.date} • ${latest.time}`;
+
+                const badge = document.getElementById('latest-bp-badge');
+                badge.textContent = cat.label;
+                badge.className = `inline-block px-3 py-1.5 rounded-xl text-xs font-extrabold border ${cat.badgeClass}`;
+
+                const targetNote = document.getElementById('latest-bp-target-note');
+                if (latest.sys < 140 && latest.dia < 90) {
+                    targetNote.innerHTML = `<i class="fa-solid fa-circle-check mr-0.5"></i> Mencapai Target (&lt;140/90)`;
+                    targetNote.className = 'text-[11px] text-emerald-700 font-bold mt-1';
+                } else {
+                    targetNote.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-0.5"></i> Di Atas Target (&ge;140/90)`;
+                    targetNote.className = 'text-[11px] text-rose-600 font-bold mt-1';
+                }
+
+                document.getElementById('latest-bp-symptom').innerHTML =
+                    `<i class="fa-solid fa-comment-medical text-teal-600 mr-1.5"></i> <strong>Catatan:</strong> ${latest.note || 'Tidak ada keluhan'}`;
+            }
+
+            // 4. Daftar Jadwal Minum Obat Hari Ini
+            const medList = document.getElementById('medication-list');
+            if (appState.medications.length === 0) {
+                medList.innerHTML = `
+                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                        <p class="text-xs text-slate-500">Belum ada jadwal obat hari ini.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            medList.innerHTML = appState.medications.map(med => {
+                const isTaken = med.taken;
+                const periodBadge = med.period === 'Pagi'
+                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                    : (med.period === 'Malam' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : 'bg-sky-100 text-sky-800 border-sky-200');
+
+                return `
+                    <div class="p-3.5 rounded-2xl border transition-all ${isTaken ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200 shadow-xs'}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-start gap-3">
+                                <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${isTaken ? 'bg-emerald-600 text-white' : 'bg-teal-100 text-teal-700'}">
+                                    <i class="fa-solid ${isTaken ? 'fa-check text-lg' : 'fa-pills text-lg'}"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h4 class="font-extrabold text-slate-900 text-sm ${isTaken ? 'line-through decoration-emerald-600/50 text-slate-600' : ''}">${med.name}</h4>
+                                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg border ${periodBadge}">
+                                            ${med.period} • ${med.time}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-1">${med.instruction}</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteMedication('${med.id}')" title="Hapus Jadwal Obat" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition">
+                                <i class="fa-regular fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="mt-3 pt-2.5 border-t ${isTaken ? 'border-emerald-200/70' : 'border-slate-100'} flex items-center justify-between">
+                            ${isTaken ? `
+                                <span class="text-xs font-extrabold text-emerald-700 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-check"></i> Sudah Diminum (${med.takenAt || med.time})
+                                </span>
+                                <button onclick="toggleMedicationTaken('${med.id}')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold transition">
+                                    Batalkan
+                                </button>
+                            ` : `
+                                <span class="text-xs font-semibold text-amber-700 flex items-center gap-1">
+                                    <i class="fa-regular fa-clock"></i> Menunggu Diminum
+                                </span>
+                                <button onclick="toggleMedicationTaken('${med.id}')" class="pulse-subtle px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition">
+                                    <i class="fa-solid fa-check-circle"></i> Tandai Sudah Diminum
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Fungsi Ceklis / Tandai Obat Sudah Diminum
+        function toggleMedicationTaken(medId) {
+            const med = appState.medications.find(m => m.id === medId);
+            if (!med) return;
+
+            med.taken = !med.taken;
+            if (med.taken) {
+                const now = new Date();
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                med.takenAt = `${hh}:${mm}`;
+                showToast(`Hebat! ${med.name} tercatat sudah diminum.`);
+            } else {
+                med.takenAt = null;
+                showToast(`Status minum ${med.name} dibatalkan.`);
+            }
+
+            saveState();
+            renderDashboard();
+        }
+
+        // Tambah & Hapus Jadwal Obat
+        function openAddMedModal() {
+            document.getElementById('modal-add-med').classList.remove('hidden');
+        }
+        function closeAddMedModal() {
+            document.getElementById('modal-add-med').classList.add('hidden');
+        }
+        function handleAddMedication(e) {
+            e.preventDefault();
+            const name = document.getElementById('med-name-input').value.trim();
+            const period = document.getElementById('med-period-input').value;
+            const time = document.getElementById('med-time-input').value;
+            const instruction = document.getElementById('med-instruction-input').value.trim();
+
+            if (!name) return;
+
+            appState.medications.push({
+                id: 'med-' + Date.now(),
+                name,
+                period,
+                time,
+                instruction: instruction || '1 Tablet sesudah makan',
+                taken: false,
+                takenAt: null
+            });
+
+            saveState();
+            renderDashboard();
+            closeAddMedModal();
+            e.target.reset();
+            showToast(`Jadwal ${name} (${period} - ${time}) ditambahkan!`);
+        }
+
+        function deleteMedication(medId) {
+            appState.medications = appState.medications.filter(m => m.id !== medId);
+            saveState();
+            renderDashboard();
+            showToast('Jadwal obat dihapus.');
+        }
+
+        // ==========================================
+        // RENDER TAB 2: CATAT TENSI & GRAFIK TREN
+        // ==========================================
+        function updateLiveBPPreview() {
+            const sys = document.getElementById('input-sys').value;
+            const dia = document.getElementById('input-dia').value;
+            const previewEl = document.getElementById('live-bp-preview');
+
+            if (!sys || !dia || sys < 50 || dia < 30) {
+                previewEl.classList.add('hidden');
+                return;
+            }
+
+            const cat = classifyBP(sys, dia);
+            previewEl.className = `rounded-2xl p-3 border text-xs transition-all ${cat.cardClass}`;
+            previewEl.innerHTML = `
+                <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold">Klasifikasi Otomatis:</span>
+                    <span class="px-2.5 py-0.5 rounded-lg font-extrabold border ${cat.badgeClass}">${cat.label} (${sys}/${dia} mmHg)</span>
+                </div>
+                <p class="text-[11px] leading-relaxed">${cat.advice}</p>
+            `;
+        }
+
+        function toggleSymptomChip(btn, text) {
+            const inputNotes = document.getElementById('input-notes');
+            if (text === 'Tidak ada keluhan') {
+                inputNotes.value = 'Tidak ada keluhan';
+            } else {
+                if (inputNotes.value === 'Tidak ada keluhan' || !inputNotes.value.trim()) {
+                    inputNotes.value = text;
+                } else if (!inputNotes.value.includes(text)) {
+                    inputNotes.value += ', ' + text;
+                }
+            }
+            // Highlight chip momentarily
+            document.querySelectorAll('.symptom-chip').forEach(c => {
+                c.classList.remove('bg-teal-600', 'text-white', 'border-teal-600');
+                c.classList.add('bg-slate-100', 'text-slate-700');
+            });
+            btn.classList.remove('bg-slate-100', 'text-slate-700');
+            btn.classList.add('bg-teal-600', 'text-white', 'border-teal-600');
+        }
+
+        function handleSaveBP(e) {
+            e.preventDefault();
+            const sys = Number(document.getElementById('input-sys').value);
+            const dia = Number(document.getElementById('input-dia').value);
+            const pulse = Number(document.getElementById('input-pulse').value);
+            const timePeriod = document.getElementById('input-time-period').value;
+            const note = document.getElementById('input-notes').value.trim() || 'Tidak ada keluhan';
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+            appState.bpLogs.push({
+                id: Date.now(),
+                date: dateStr,
+                time: timePeriod,
+                sys,
+                dia,
+                pulse,
+                note
+            });
+
+            saveState();
+            renderBPTab();
+            renderDashboard();
+
+            e.target.reset();
+            document.getElementById('live-bp-preview').classList.add('hidden');
+            const cat = classifyBP(sys, dia);
+            showToast(`Tensi ${sys}/${dia} mmHg (${cat.label}) berhasil disimpan!`);
+        }
+
+        function renderBPTab() {
+            // Render SVG Chart untuk 7 data terakhir
+            const chartContainer = document.getElementById('bp-chart-container');
+            const recentLogs = appState.bpLogs.slice(-7);
+
+            if (recentLogs.length === 0) {
+                chartContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Belum ada data tekanan darah.</p>`;
+            } else {
+                const width = 360;
+                const height = 185;
+                const padLeft = 32;
+                const padRight = 18;
+                const padTop = 22;
+                const padBottom = 30;
+                const plotW = width - padLeft - padRight;
+                const plotH = height - padTop - padBottom;
+
+                const minY = 60;
+                const maxY = 180;
+                const getY = (val) => {
+                    const clamped = Math.max(minY, Math.min(maxY, val));
+                    return padTop + plotH - ((clamped - minY) / (maxY - minY)) * plotH;
+                };
+                const getX = (idx) => {
+                    if (recentLogs.length === 1) return padLeft + plotW / 2;
+                    return padLeft + (idx / (recentLogs.length - 1)) * plotW;
+                };
+
+                const sysPoints = recentLogs.map((d, i) => `${getX(i)},${getY(d.sys)}`).join(' ');
+                const diaPoints = recentLogs.map((d, i) => `${getX(i)},${getY(d.dia)}`).join(' ');
+
+                const y140 = getY(140);
+                const y90 = getY(90);
+
+                let circlesAndLabels = '';
+                recentLogs.forEach((d, i) => {
+                    const x = getX(i);
+                    const yS = getY(d.sys);
+                    const yD = getY(d.dia);
+                    circlesAndLabels += `
+                        <!-- Garis vertikal tipis per hari -->
+                        <line x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop + plotH}" stroke="#f1f5f9" stroke-width="1" />
+                        <!-- Titik & Nilai Sistolik -->
+                        <circle cx="${x}" cy="${yS}" r="4" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
+                        <text x="${x}" y="${yS - 7}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#be123c">${d.sys}</text>
+                        <!-- Titik & Nilai Diastolik -->
+                        <circle cx="${x}" cy="${yD}" r="4" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5" />
+                        <text x="${x}" y="${yD + 13}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#1d4ed8">${d.dia}</text>
+                        <!-- Label Tanggal Bawah -->
+                        <text x="${x}" y="${height - 8}" text-anchor="middle" font-size="9" font-weight="600" fill="#64748b">${d.date}</text>
+                    `;
+                });
+
+                chartContainer.innerHTML = `
+                    <svg viewBox="0 0 ${width} ${height}" class="w-full h-auto overflow-visible">
+                        <!-- Zona Target Hijau (<140/90) -->
+                        <rect x="${padLeft}" y="${y140}" width="${plotW}" height="${plotH - (y140 - padTop)}" fill="#ecfdf5" opacity="0.55" rx="4" />
+
+                        <!-- Garis Batas Target Sistolik 140 mmHg -->
+                        <line x1="${padLeft}" y1="${y140}" x2="${width - padRight}" y2="${y140}" stroke="#f59e0b" stroke-dasharray="4,3" stroke-width="1.2" />
+                        <text x="${padLeft - 4}" y="${y140 + 3}" text-anchor="end" font-size="8.5" font-weight="700" fill="#d97706">140</text>
+
+                        <!-- Garis Batas Target Diastolik 90 mmHg -->
+                        <line x1="${padLeft}" y1="${y90}" x2="${width - padRight}" y2="${y90}" stroke="#60a5fa" stroke-dasharray="4,3" stroke-width="1.2" />
+                        <text x="${padLeft - 4}" y="${y90 + 3}" text-anchor="end" font-size="8.5" font-weight="700" fill="#2563eb">90</text>
+
+                        <!-- Polylines Sistolik & Diastolik -->
+                        <polyline fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${sysPoints}" />
+                        <polyline fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${diaPoints}" />
+
+                        ${circlesAndLabels}
+                    </svg>
+                `;
+            }
+
+            // Render Daftar Riwayat Pengukuran (Terbaru di atas)
+            const historyList = document.getElementById('bp-history-list');
+            document.getElementById('bp-history-count').textContent = `${appState.bpLogs.length} Data`;
+
+            const reversed = [...appState.bpLogs].reverse();
+            historyList.innerHTML = reversed.map(item => {
+                const cat = classifyBP(item.sys, item.dia);
+                return `
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-base font-extrabold text-slate-900">${item.sys}/${item.dia} <small class="text-[11px] font-semibold text-slate-500">mmHg</small></span>
+                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg border ${cat.badgeClass}">${cat.label}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                <i class="fa-regular fa-calendar mr-1"></i>${item.date} (${item.time}) • <i class="fa-solid fa-heart text-rose-500 mr-0.5"></i>${item.pulse} bpm
+                            </p>
+                            <p class="text-xs text-slate-700 mt-1 font-medium">
+                                <i class="fa-regular fa-comment-dots text-teal-600 mr-1"></i>${item.note}
+                            </p>
+                        </div>
+                        <button onclick="deleteBPLog(${item.id})" title="Hapus Data" class="text-slate-400 hover:text-rose-600 p-2 rounded-xl transition">
+                            <i class="fa-regular fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteBPLog(id) {
+            if (appState.bpLogs.length <= 1) {
+                showToast('Minimal 1 data riwayat harus tersisa untuk grafik.');
+                return;
+            }
+            appState.bpLogs = appState.bpLogs.filter(item => item.id !== id);
+            saveState();
+            renderBPTab();
+            renderDashboard();
+            showToast('Data riwayat tekanan darah dihapus.');
+        }
+
+        // ==========================================
+        // RENDER TAB 3: EVALUASI KEPATUHAN (MMAS-8)
+        // ==========================================
+        function renderQuizTab() {
+            const qContainer = document.getElementById('quiz-questions-container');
+
+            qContainer.innerHTML = QUIZ_QUESTIONS.map((q) => {
+                const currentAns = appState.quizAnswers[q.id];
+                const isYes = currentAns === true;
+                const isNo = currentAns === false;
+
+                return `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+                        <p class="text-xs sm:text-sm font-bold text-slate-800 leading-relaxed mb-3">${q.text}</p>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button type="button" onclick="answerQuiz('${q.id}', true)"
+                                class="py-2.5 px-4 rounded-xl font-extrabold text-xs border transition flex items-center justify-center gap-1.5 ${
+                                    isYes
+                                        ? (q.goodAnswer === true ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-rose-600 text-white border-rose-600 shadow-sm')
+                                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                }">
+                                <i class="fa-solid ${isYes ? 'fa-circle-check' : 'fa-circle'} text-[10px]"></i> YA
+                            </button>
+
+                            <button type="button" onclick="answerQuiz('${q.id}', false)"
+                                class="py-2.5 px-4 rounded-xl font-extrabold text-xs border transition flex items-center justify-center gap-1.5 ${
+                                    isNo
+                                        ? (q.goodAnswer === false ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-rose-600 text-white border-rose-600 shadow-sm')
+                                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                }">
+                                <i class="fa-solid ${isNo ? 'fa-circle-check' : 'fa-circle'} text-[10px]"></i> TIDAK
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderQuizScoreCard();
+        }
+
+        function answerQuiz(qId, val) {
+            appState.quizAnswers[qId] = val;
+            saveState();
+            renderQuizTab();
+        }
+
+        function resetQuestionnaire() {
+            QUIZ_QUESTIONS.forEach(q => {
+                appState.quizAnswers[q.id] = q.goodAnswer;
+            });
+            saveState();
+            renderQuizTab();
+            showToast('Kuesioner di-reset ke kondisi patuh penuh (Skor 8/8).');
+        }
+
+        function renderQuizScoreCard() {
+            let score = 0;
+            let nonAdherentReasons = [];
+
+            QUIZ_QUESTIONS.forEach(q => {
+                const ans = appState.quizAnswers[q.id];
+                if (ans === q.goodAnswer) {
+                    score += 1;
+                } else {
+                    nonAdherentReasons.push({
+                        tag: q.factorTag,
+                        tip: q.counselingTip,
+                        id: q.id
+                    });
+                }
+            });
+
+            let category = '';
+            let badgeColor = '';
+            let borderColor = '';
+            let summaryText = '';
+
+            if (score === 8) {
+                category = 'Kepatuhan Tinggi';
+                badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                borderColor = 'border-emerald-500';
+                summaryText = 'Luar biasa! Bapak/Ibu memiliki kedisiplinan minum obat yang sangat baik. Pertahankan kebiasaan ini untuk mencegah risiko stroke, gagal jantung, dan gangguan ginjal.';
+            } else if (score >= 6) {
+                category = 'Kepatuhan Sedang';
+                badgeColor = 'bg-amber-100 text-amber-800 border-amber-300';
+                borderColor = 'border-amber-500';
+                summaryText = 'Bapak/Ibu sudah cukup baik dalam menjalani pengobatan, namun masih ada beberapa kendala yang perlu diatasi agar tekanan darah stabil 24 jam.';
+            } else {
+                category = 'Kepatuhan Rendah';
+                badgeColor = 'bg-rose-100 text-rose-800 border-rose-300';
+                borderColor = 'border-rose-500';
+                summaryText = 'Perhatian: Tingkat kepatuhan minum obat masih rendah. Ketidakpatuhan berisiko memicu lonjakan tekanan darah mendadak dan komplikasi organ vital.';
+            }
+
+            const resultCard = document.getElementById('quiz-result-card');
+            resultCard.className = `bg-white rounded-2xl p-4 shadow-sm border-2 ${borderColor}`;
+
+            let reasonsHtml = '';
+            if (nonAdherentReasons.length > 0) {
+                reasonsHtml = `
+                    <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                        <p class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-doctor text-teal-600"></i> Rekomendasi Tindak Lanjut Konseling:
+                        </p>
+                        ${nonAdherentReasons.map(r => `
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                                <span class="font-extrabold text-teal-800 block">• ${r.tag}:</span>
+                                <span class="text-slate-600">${r.tip}</span>
+                                ${r.id === 'q3' ? `
+                                    <button onclick="switchTab('meso')" class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-extrabold text-teal-700 underline">
+                                        Buka Pelaporan Efek Samping (MESO) <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            resultCard.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold text-slate-400 uppercase">Skor Kuesioner Mandiri</span>
+                        <div class="flex items-baseline gap-1.5 mt-0.5">
+                            <span class="text-3xl font-extrabold text-slate-900">${score}</span>
+                            <span class="text-xs font-bold text-slate-500">/ 8 Poin</span>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold border ${badgeColor}">
+                        ${category}
+                    </span>
+                </div>
+                <p class="text-xs text-slate-600 mt-2 leading-relaxed">${summaryText}</p>
+                ${reasonsHtml}
+            `;
+        }
+
+        // ==========================================
+        // RENDER TAB 4: MESO & EDUKASI GAYA HIDUP
+        // ==========================================
+        function getMesoSpecificAdvice(drug, symptom, severity) {
+            if (symptom.includes('bengkak')) {
+                return 'Edema perifer (bengkak kaki) sering berkaitan dengan pelebaran pembuluh darah kapiler oleh golongan CCB (seperti Amlodipin). Tinggikan kaki saat duduk/tidur, kurangi garam, dan konsultasikan ke dokter untuk penyesuaian dosis/kombinasi.';
+            }
+            if (symptom.includes('Batuk kering')) {
+                return 'Batuk kering persisten merupakan efek samping klasik golongan ACE Inhibitor (Captopril/Lisinopril) akibat penumpukan bradikinin. Sampaikan ke dokter agar dapat dievaluasi penggantian ke golongan ARB (seperti Candesartan).';
+            }
+            if (symptom.includes('Pusing')) {
+                return 'Gejala mengarah pada Hipotensi Ortostatik. Biasakan duduk terlebih dahulu di tepi tempat tidur selama 1–2 menit sebelum berdiri. Pantau tekanan darah saat keluhan muncul.';
+            }
+            if (symptom.includes('buang air kecil')) {
+                return 'Efek diuretik membantu mengeluarkan kelebihan cairan dan natrium. Sebaiknya diminum pada pagi hari agar tidak mengganggu tidur malam.';
+            }
+            return 'Pantau keluhan secara berkala. Jika keluhan terasa berat atau mengganggu aktivitas harian, segera hubungi dokter atau apoteker tanpa menghentikan obat secara sepihak.';
+        }
+
+        function handleSaveMeso(e) {
+            e.preventDefault();
+            const drug = document.getElementById('meso-drug').value;
+            const symptom = document.getElementById('meso-symptom').value;
+            const severityEl = document.querySelector('input[name="meso-severity"]:checked');
+            const severity = severityEl ? severityEl.value : 'Ringan';
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const advice = getMesoSpecificAdvice(drug, symptom, severity);
+
+            appState.mesoReports.unshift({
+                id: Date.now(),
+                date: dateStr,
+                drug,
+                symptom,
+                severity,
+                advice
+            });
+
+            saveState();
+            renderMesoTab();
+            showToast('Laporan keluhan efek samping berhasil dicatat!');
+        }
+
+        function renderMesoTab() {
+            const listEl = document.getElementById('meso-history-list');
+            document.getElementById('meso-count-badge').textContent = `${appState.mesoReports.length} Catatan`;
+
+            if (appState.mesoReports.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada laporan keluhan efek samping obat.</p>`;
+            } else {
+                listEl.innerHTML = appState.mesoReports.map(r => {
+                    const sevBadge = r.severity === 'Berat'
+                        ? 'bg-rose-100 text-rose-800 border-rose-300'
+                        : (r.severity === 'Sedang' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300');
+
+                    return `
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="text-[11px] font-bold text-teal-700 block">${r.drug}</span>
+                                    <h4 class="font-extrabold text-slate-800 text-xs mt-0.5">${r.symptom}</h4>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border ${sevBadge}">${r.severity}</span>
+                                    <button onclick="deleteMesoReport(${r.id})" class="text-slate-400 hover:text-rose-600 p-1">
+                                        <i class="fa-regular fa-trash-can text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-white border border-slate-200/70 text-xs text-slate-600 leading-relaxed">
+                                <strong class="text-slate-800"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>Rekomendasi Farmasi:</strong> ${r.advice}
+                            </div>
+                            <span class="text-[10px] text-slate-400 block text-right">Dicatat pada: ${r.date}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render Checklist Modifikasi Gaya Hidup
+            const lsContainer = document.getElementById('lifestyle-checklist');
+            lsContainer.innerHTML = appState.lifestyleChecks.map(item => `
+                <div onclick="toggleLifestyle('${item.id}')" class="cursor-pointer p-3 rounded-xl border transition flex items-center gap-3 ${
+                    item.done ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-700'
+                }">
+                    <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                        item.done ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300 text-transparent'
+                    }">
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </div>
+                    <span class="text-xs font-bold ${item.done ? 'line-through decoration-emerald-600/50' : ''}">${item.text}</span>
+                </div>
+            `).join('');
+        }
+
+        function deleteMesoReport(id) {
+            appState.mesoReports = appState.mesoReports.filter(r => r.id !== id);
+            saveState();
+            renderMesoTab();
+            showToast('Catatan MESO dihapus.');
+        }
+
+        function toggleLifestyle(id) {
+            const item = appState.lifestyleChecks.find(i => i.id === id);
+            if (item) {
+                item.done = !item.done;
+                saveState();
+                renderMesoTab();
+            }
+        }
+
+        // ==========================================
+        // MODAL PROFIL & RINGKASAN DOKTER/APOTEKER
+        // ==========================================
+        function openEditProfileModal() {
+            document.getElementById('edit-profile-name').value = appState.profile.name;
+            document.getElementById('edit-profile-age').value = appState.profile.age;
+            document.getElementById('edit-profile-target').value = appState.profile.target;
+            document.getElementById('modal-edit-profile').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('modal-edit-profile').classList.add('hidden');
+        }
+
+        function handleSaveProfile(e) {
+            e.preventDefault();
+            appState.profile.name = document.getElementById('edit-profile-name').value.trim();
+            appState.profile.age = Number(document.getElementById('edit-profile-age').value);
+            appState.profile.target = document.getElementById('edit-profile-target').value;
+            saveState();
+            renderDashboard();
+            closeEditProfileModal();
+            showToast('Profil pasien berhasil diperbarui!');
+        }
+
+        function openSummaryModal() {
+            const latestBP = appState.bpLogs[appState.bpLogs.length - 1];
+            const bpCat = latestBP ? classifyBP(latestBP.sys, latestBP.dia).label : '-';
+
+            const todayTotal = appState.medications.length;
+            const todayTaken = appState.medications.filter(m => m.taken).length;
+            const weekTotal = appState.pastSixDaysTotal + todayTotal;
+            const weekTaken = appState.pastSixDaysTaken + todayTaken;
+            const pct = weekTotal > 0 ? Math.round((weekTaken / weekTotal) * 100) : 100;
+
+            let quizScore = 0;
+            QUIZ_QUESTIONS.forEach(q => {
+                if (appState.quizAnswers[q.id] === q.goodAnswer) quizScore++;
+            });
+
+            const medsText = appState.medications.map(m =>
+                `  - ${m.name} (${m.period} ${m.time}): ${m.taken ? 'Sudah Diminum' : 'Belum Diminum'}`
+            ).join('\n');
+
+            const mesoText = appState.mesoReports.length > 0
+                ? appState.mesoReports.map(r => `  - ${r.drug}: ${r.symptom} (${r.severity})`).join('\n')
+                : '  - Tidak ada keluhan efek samping obat';
+
+            const summary =
+`LAPORAN PEMANTAUAN PASIEN HIPERTENSI (TENSICARE)
+================================================
+Pasien       : ${appState.profile.name} (${appState.profile.age} Tahun)
+Target TD    : ${appState.profile.target}
+TD Terakhir  : ${latestBP ? `${latestBP.sys}/${latestBP.dia} mmHg (Nadi ${latestBP.pulse} bpm)` : '-'}
+Kategori TD  : ${bpCat}
+Kepatuhan 7H : ${pct}% (${weekTaken}/${weekTotal} dosis diminum)
+Skor Evaluasi: ${quizScore}/8 Poin
+
+JADWAL OBAT HARI INI:
+${medsText}
+
+CATATAN EFEK SAMPING (MESO):
+${mesoText}`;
+
+            document.getElementById('summary-text-box').textContent = summary;
+            document.getElementById('modal-summary').classList.remove('hidden');
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('modal-summary').classList.add('hidden');
+        }
+
+        function copySummaryToClipboard() {
+            const text = document.getElementById('summary-text-box').textContent;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+            showToast('Ringkasan laporan berhasil disalin ke Clipboard!');
+        }
+
+        function resetAllDemoData() {
+            appState = getDefaultState();
+            saveState();
+            applyElderlyMode();
+            renderAll();
+            closeSummaryModal();
+            showToast('Data demonstrasi berhasil dikembalikan ke pengaturan awal.');
+        }
+
+        // Toast Helper
+        let toastTimeout = null;
+        function showToast(message) {
+            const box = document.getElementById('toast-box');
+            const msg = document.getElementById('toast-msg');
+            msg.textContent = message;
+            box.classList.remove('opacity-0', '-translate-y-2');
+            box.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                box.classList.remove('opacity-100', 'translate-y-0');
+                box.classList.add('opacity-0', '-translate-y-2');
+            }, 2600);
+        }
+
+        function renderAll() {
+            applyElderlyMode();
+            renderDashboard();
+            renderBPTab();
+            renderQuizTab();
+            renderMesoTab();
+        }
+
+        window.onload = function () {
+            renderAll();
+        };
+    </script>
+</body>
+</html>
